@@ -1,0 +1,11 @@
+{
+    "mcpServers": {
+        "laravel-boost": {
+            "command": "/Users/fh/.config/herd-lite/bin/php",
+            "args": [
+                "/Users/fh/projekte/jassen-app/artisan",
+                "boost:mcp"
+            ]
+        }
+    }
+}
