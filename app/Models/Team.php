@@ -22,7 +22,7 @@ class Team extends Model
 
   public function game(): BelongsTo
   {
-    return $this->BelongsTo(Game::class);
+    return $this->BelongsTo(Game::class, 'game_id');
   }
 
   public function players(): HasMany
