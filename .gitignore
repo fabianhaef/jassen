@@ -141,3 +141,5 @@ thumb
 sketch
 
 # End of https://www.gitignore.io/api/vue,laravel,phpstorm,visualstudiocode
+jassenapp_database
+jassenapp_db.db
