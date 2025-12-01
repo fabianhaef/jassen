@@ -17,27 +17,41 @@ class Round extends Model
     use HasFactory;
 
     protected $fillable = [
-      'game_id',
-      'round_number',
-      'trump',
-      'trump_caller_id',
-      'is_geschoben',
-      'status',
+        'game_id',
+        'round_number',
+        'trump',
+        'trump_caller_id',
+        'is_geschoben',
+        'status',
     ];
 
-    public function game(): BelongsTo {
+    public function setTrump($trump): void
+    {
+        $this->trump = $trump;
+    }
+
+    public function getTrump(): string
+    {
+        return $this->trump;
+    }
+
+    public function game(): BelongsTo
+    {
         return $this->belongsTo(Game::class);
     }
 
-    public function trumpCaller(): BelongsTo {
+    public function trumpCaller(): BelongsTo
+    {
         return $this->belongsTo(GamePlayer::class, 'trump_caller_id');
     }
 
-    public function tricks(): HasMany {
+    public function tricks(): HasMany
+    {
         return $this->hasMany(Trick::class);
     }
 
-    public function hands(): HasMany {
+    public function hands(): HasMany
+    {
         return $this->hasMany(Hand::class);
     }
 }

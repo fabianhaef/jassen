@@ -28,7 +28,7 @@ Since you are learning, this stack strikes the perfect balance between "Modern/I
 ## 📅 Month 1: The Engine (Backend & Logic)
 *Focus: Logic, Unit Testing, Data Structure. No UI yet.*
 
-### Week 1: Setup & Architecture
+### Week 1: Setup & Architecture XXXX
 1.  **Install Laravel**: Set up a fresh project via `laravel new jassen --jet` (Jetstream gives you Login/Registration out of the box). Choose **Inertia** + **Vue**.
 2.  **Database Schema**: Design your tables.
     *   `users`: (Standard auth).

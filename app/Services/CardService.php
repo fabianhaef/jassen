@@ -17,8 +17,9 @@ class CardService {
         return $deck;
     }
 
-    public function shuffleDeck(array $deck) {
-        return shuffle($deck);
+    public function shuffleDeck(array $deck): array {
+        shuffle($deck);
+        return $deck;
     }
 
     public function dealCards(array $deck) {
