@@ -8,22 +8,29 @@ use App\Models\GamePlayer;
 
 class GameService
 {
-    public function selectTrump(Round $round, string $trump, int $playerId): void {
+    public function selectTrump(Round $round, string $trump, int $playerId): void
+    {
         $round->trump = $trump;
         $round->trump_caller_id = $playerId;
         $round->save();
     }
 
-    public function schieben(Round $round): void {
+    public function schieben(Round $round): void
+    {
         $round->is_geschoben = true;;
         $round->save();
     }
 
-    public function createGame()
-    {
-        $game = new Game();
-        $game->save();
-        return $game;
+    public function createGame(
+        $variation,
+        $targetScore,
+        $status
+    ): Game {
+        return Game::create([
+            'variation' => $variation,
+            'target_score' => $targetScore,
+            'status' => $status,
+        ]);
     }
 
     public function startRound(Game $game): Round
