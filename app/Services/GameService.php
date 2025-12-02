@@ -8,9 +8,9 @@ use App\Models\GamePlayer;
 
 class GameService
 {
-    public function selectTrump(Round $round, string $trump, GamePlayer $player): void {
+    public function selectTrump(Round $round, string $trump, int $playerId): void {
         $round->trump = $trump;
-        $round->trump_caller_id = $player->id;
+        $round->trump_caller_id = $playerId;
         $round->save();
     }
 
