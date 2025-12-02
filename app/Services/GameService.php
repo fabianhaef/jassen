@@ -14,7 +14,7 @@ class GameService
         $round->save();
     }
 
-    public function schieben(Round $round, GamePlayer $player): void {
+    public function schieben(Round $round): void {
         $round->is_geschoben = true;;
         $round->save();
     }
