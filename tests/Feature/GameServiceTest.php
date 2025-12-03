@@ -23,7 +23,7 @@ class GameServiceTest extends TestCase
 
         $game = Game::factory()->create(
             [
-                'variation' => 'normal',
+                'variation' => 'trumpf',
                 'target_score' => 100,
                 'status' => 'active',
             ]
@@ -52,7 +52,7 @@ class GameServiceTest extends TestCase
 
         $game = Game::factory()->create(
             [
-                'variation' => 'normal',
+                'variation' => 'trumpf',
                 'target_score' => 100,
                 'status' => 'active',
             ]
@@ -77,7 +77,7 @@ class GameServiceTest extends TestCase
         $users = User::factory()->count(4)->create();
 
         $game = $gameService->createGame(
-            'normal',
+            'trumpf',
             100,
             'active',
             $users->pluck('id')->toArray(),
@@ -96,7 +96,7 @@ class GameServiceTest extends TestCase
 
         $game = Game::factory()->create(
             [
-                'variation' => 'normal',
+                'variation' => 'trumpf',
                 'target_score' => 100,
                 'status' => 'active',
             ]
@@ -115,7 +115,7 @@ class GameServiceTest extends TestCase
 
         $game = Game::factory()->create(
             [
-                'variation' => 'normal',
+                'variation' => 'trumpf',
                 'target_score' => 100,
                 'status' => 'active',
             ]

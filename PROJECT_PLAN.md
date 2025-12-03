@@ -45,7 +45,7 @@ Since you are learning, this stack strikes the perfect balance between "Modern/I
 4.  **Trump Selection**: Logic to store/select the trump color.
 
 ### Week 3: Rule Validation (The Hard Part)
-*Jass has tricky rules (Leinezwang, Undertrump).*
+*Jass has tricky rules (Zwang, Undertrump).*
 1.  **Validation Logic**: Create a `RuleEngine` class.
     *   Input: `CurrentGameState`, `CardToPlay`, `Player`.
     *   Output: `Boolean` (Allowed/Denied).
