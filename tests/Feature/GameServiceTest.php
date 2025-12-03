@@ -82,4 +82,24 @@ class GameServiceTest extends TestCase
 
         expect($game)->not->toBeNull();
     }
+
+
+    public function test_start_round()
+    {
+        $gameService = new GameService();
+
+        $game = Game::factory()->create(
+            [
+                'variation' => 'normal',
+                'target_score' => 100,
+                'status' => 'active',
+            ]
+        );
+
+        $round = $gameService->startRound($game);
+
+        expect($round)->toBeInstanceOf(Round::class);
+        expect($round->game_id)->toBe($game->id);
+        expect($round->round_number)->toBe($game->rounds()->count());
+    }
 }

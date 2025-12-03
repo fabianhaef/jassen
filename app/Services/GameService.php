@@ -35,9 +35,12 @@ class GameService
 
     public function startRound(Game $game): Round
     {
-        $round = new Round();
-        $round->game_id = $game->id;
-        $round->save();
+        $round = Round::factory()->create([
+            'game_id' => $game->id,
+            'round_number' => $game->rounds()->count() + 1,
+            'status' => 'active',
+        ])->first();
+
         return $round;
     }
 
