@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Game;
 use App\Models\Round;
 use App\Models\GamePlayer;
+use App\Models\Hand;
 
 class GameService
 {
@@ -24,13 +25,24 @@ class GameService
     public function createGame(
         $variation,
         $targetScore,
-        $status
+        $status,
+        array $usersIds
     ): Game {
-        return Game::create([
+        $game =  Game::create([
             'variation' => $variation,
             'target_score' => $targetScore,
             'status' => $status,
         ]);
+
+        foreach ($usersIds as $index => $userId) {
+            GamePlayer::create([
+                'user_id' => $userId,
+                'game_id' => $game->id,
+                'seat_position' => $index,
+            ]);
+        }
+
+        return $game;
     }
 
     public function startRound(Game $game): Round
@@ -57,7 +69,8 @@ class GameService
         $players = $round->game->players()->orderBy('seat_position')->get();
 
         foreach ($players as $index => $player) {
-            $round->hands()->create([
+            Hand::create([
+                'round_id' => $round->id,
                 'player_id' => $player->id,
                 'cards' => $dealtCards[$index],
             ]);
