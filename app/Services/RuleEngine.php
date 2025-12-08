@@ -35,7 +35,18 @@ class RuleEngine
             $ledSuit = $this->getLeadSuit($currentTrick);
             $hasCardsOfSuit = $this->hasCardsOfSuit($hand, $ledSuit);
             if (!$hasCardsOfSuit) {
-                return true;
+                // Check 2: Is card NOT trump?
+                if (!$this->isTrump($card, $round)) {
+                    return true;
+                }
+                
+                // Check 3: Is there NO higher trump on table?
+                if (!$this->hasHigherTrumpOnTable($currentTrick, $card, $round)) {
+                    return true;
+                }
+                
+                // Check 4: Player has only trumps?
+                return $this->hasOnlyTrumpCards($hand, $round->trump);
             }
 
 
