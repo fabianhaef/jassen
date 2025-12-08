@@ -32,7 +32,7 @@ class RuleEngine
             }
 
             // check if the hand has cards of the led suit, if not, any card can be played
-            $ledSuit = $currentTrick->getLeadSuit();
+            $ledSuit = $this->getLeadSuit($currentTrick);
             $hasCardsOfSuit = $this->hasCardsOfSuit($hand, $ledSuit);
             if (!$hasCardsOfSuit) {
                 return true;
@@ -86,10 +86,15 @@ class RuleEngine
         });
     }
 
+
     public function hasHigherTrumpOnTable(Trick $currentTrick, Card $card, Round $round): bool
     {
         $currentTrump = $round->trump;
         $highestTrumpOnTable = $currentTrick->getHighestTrumpCard($currentTrump);
-        return $card->rank > $highestTrumpOnTable->rank;
+        if ($highestTrumpOnTable > 0) {
+            return $card->getPoints('trumpf', $currentTrump) > $highestTrumpOnTable;
+        } else {
+            return false;
+        }
     }
 }

@@ -44,11 +44,11 @@ class Trick extends Model
         return $this->hasMany(PlayedCard::class);
     }
 
-    public function getHighestTrumpCard(string $trumpSuit): Card
+    public function getHighestTrumpCard(string $trumpSuit): int
     {
         return $this->playedCards->max(function ($playedCard) use ($trumpSuit) {
             if ($playedCard->card->suit === $trumpSuit) {
-                return $playedCard->card->rank;
+                return $playedCard->card->getPoints('trumpf', $trumpSuit);
             }
             return 0;
         });
