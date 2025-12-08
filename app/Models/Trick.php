@@ -9,6 +9,7 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Round;
 use App\Models\GamePlayer;
 use App\Models\PlayedCard;
+use App\ValueObjects\Card;
 
 class Trick extends Model
 {
@@ -41,5 +42,15 @@ class Trick extends Model
     public function playedCards(): HasMany
     {
         return $this->hasMany(PlayedCard::class);
+    }
+
+    public function getHighestTrumpCard(string $trumpSuit): Card
+    {
+        return $this->playedCards->max(function ($playedCard) use ($trumpSuit) {
+            if ($playedCard->card->suit === $trumpSuit) {
+                return $playedCard->card->rank;
+            }
+            return 0;
+        });
     }
 }

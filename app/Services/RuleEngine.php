@@ -2,8 +2,6 @@
 
 namespace App\Services;
 
-use App\Models\Game;
-use App\Models\GamePlayer;
 use App\ValueObjects\Card;
 use App\Models\Round;
 use App\Models\Hand;
@@ -11,54 +9,50 @@ use App\Models\Trick;
 
 class RuleEngine
 {
-    public function getPlayableCards(Round $round, Hand $hand, Trick $currentTrick, string $gameMode): array
+    public function getPlayableCards(Round $round, Hand $hand, Trick $currentTrick): array
     {
-        // for trumpf game mode => 
-        if ($gameMode === 'trumpf') {
-            // If the current trick is empty, any card can be played
-            if ($this->isTrickEmpty($currentTrick)) {
-                return $hand->cards;
-            }
-
-
-            // get the led suit
-            $ledSuit = $currentTrick->playedCards->first()->suit;
-            $currentTrump = $round->trump;
-            $isTrumpLed = $ledSuit === $currentTrump;
-        
-
-            // 1. Following Suit (General Rule) => get the cards of the led suit
-            $ledCards = $hand->cards->filter(function ($card) use ($ledSuit) {
-                return $card->suit === $ledSuit;
-            });
-
-            // 2. When You Can't Follow Suit (Freedom of Choice) => get the cards of the hand that are not of the led suit AND turmp cards
-            if (!$isTrumpLed) {
-                $nonLedCards = $hand->cards->filter(function ($card) use ($ledSuit, $currentTrump) {
-                    return $card->suit !== $ledSuit && $card->suit !== $currentTrump;
-                });
-
-                return $nonLedCards;
-            } else {
-                $nonLedCards = $hand->cards->filter(function ($card) use ($ledSuit, $currentTrump) {
-                    return $card->suit !== $ledSuit && $this->isTrump($card, $currentTrump);
-                });
-
-                return $nonLedCards;
+        foreach ($hand->cards as $card) {
+            if ($this->canPlayCard($round, $hand, $currentTrick, $card)) {
+                $playableCards[] = $card;
             }
         }
 
-        // // for undeufe / obenabe game mode => trump cards are not allowed
-
-        return [];
+        return $playableCards;
     }
 
     public function canPlayCard(Round $round, Hand $hand, Trick $currentTrick, Card $card): bool
     {
         $gameMode = $round->game->variation;
+
+        // for trumpf game mode 
         if ($gameMode === 'trumpf') {
-            
+            // If the current trick is empty, any card can be played
+            if ($this->isTrickEmpty($currentTrick)) {
+                return true;
+            }
+
+            // check if the hand has cards of the led suit, if not, any card can be played
+            $ledSuit = $currentTrick->getLeadSuit();
+            $hasCardsOfSuit = $this->hasCardsOfSuit($hand, $ledSuit);
+            if (!$hasCardsOfSuit) {
+                return true;
+            }
+
+
+            // check if the card is the same suit as the led suit
+            if ($card->suit === $ledSuit) {
+                return true;
+            }
+
+            // check if the card is a trump card and the led suit is not the trump suit
+            if ($card->suit !== $ledSuit and $this->isTrump($card, $round)) {
+                return true;
+            } else {
+                return $this->isTrump($card, $round);
+            }
         }
+
+        // // for undeufe / obenabe game mode => trump cards are not allowed
 
         return false;
     }
@@ -80,8 +74,22 @@ class RuleEngine
         })->isNotEmpty();
     }
 
-    private function isTrump(Card $card, Round $round): bool
+    public function isTrump(Card $card, Round $round): bool
     {
         return $card->suit === $round->trump;
+    }
+
+    public function hasOnlyTrumpCards(Hand $hand, string $trumpSuit): bool
+    {
+        return $hand->cards->every(function ($card) use ($trumpSuit) {
+            return $card->suit === $trumpSuit;
+        });
+    }
+
+    public function hasHigherTrumpOnTable(Trick $currentTrick, Card $card, Round $round): bool
+    {
+        $currentTrump = $round->trump;
+        $highestTrumpOnTable = $currentTrick->getHighestTrumpCard($currentTrump);
+        return $card->rank > $highestTrumpOnTable->rank;
     }
 }
