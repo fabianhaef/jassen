@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Model;
 use App\Models\GamePlayer;
 use App\Models\Trick;
+use App\Casts\CardCast;
 
 class PlayedCard extends Model
 {
@@ -18,6 +19,10 @@ class PlayedCard extends Model
         'player_id',
         'card',
         'play_order',
+    ];
+
+    protected $casts = [
+        'card' => CardCast::class,
     ];
 
     public function trick(): BelongsTo

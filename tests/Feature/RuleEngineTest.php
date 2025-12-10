@@ -10,6 +10,8 @@ use App\Models\Round;
 use App\Models\Game;
 use App\Models\GamePlayer;
 use App\Models\User;
+use App\Models\Trick;
+use App\Models\PlayedCard;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 
 class RuleEngineTest extends TestCase
@@ -28,12 +30,81 @@ class RuleEngineTest extends TestCase
 
     public function test_is_trick_empty()
     {
-        expect(true)->toBe(true);
+        $round = Round::factory()->create([
+            'game_id' => Game::factory()->create([
+                'variation' => 'trumpf',
+                'target_score' => 100,
+                'status' => 'active'
+            ]),
+            'round_number' => 1,
+            'status' => 'active',
+            'trump' => 'schellen',
+        ]);
+
+        $user = User::factory()->create();
+        $player = GamePlayer::factory()->create([
+            'user_id' => $user->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 0,
+        ]);
+
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 1,
+            'leading_player_id' => $player->id,
+            'winner_player_id' => $player->id,
+            'points' => 0,
+        ]);
+
+        $playedCard = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $player->id,  
+            'card' => 'schellen-6',
+            'play_order' => 1,
+        ]);
+
+        $isTrickEmpty = (new RuleEngine())->isTrickEmpty($trick);
+        expect($isTrickEmpty)->toBe(false);
     }
 
     public function test_get_lead_suit()
     {
-        expect(true)->toBe(true);
+        $round = Round::factory()->create([
+            'game_id' => Game::factory()->create([
+                'variation' => 'trumpf',
+                'target_score' => 100,
+                'status' => 'active'
+            ]),
+            'round_number' => 1,
+            'status' => 'active',
+            'trump' => 'schellen',
+        ]);
+
+        $user = User::factory()->create();
+        $player = GamePlayer::factory()->create([
+            'user_id' => $user->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 0,
+        ]);
+
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 1,
+            'leading_player_id' => $player->id,
+            'winner_player_id' => $player->id,
+            'points' => 0,
+        ]);
+
+        $playedCard = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $player->id,  
+            'card' => 'schellen-6',
+            'play_order' => 1,
+        ]);
+
+        $leadSuit = (new RuleEngine())->getLeadSuit($trick);
+        expect($leadSuit)->toBe('schellen');
+        expect($leadSuit)->not->toBe('rosen');
     }
 
     public function test_has_cards_of_suit()

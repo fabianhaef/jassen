@@ -68,17 +68,21 @@ class RuleEngine
         return false;
     }
 
-    private function isTrickEmpty(Trick $currentTrick): bool
+    public function isTrickEmpty(Trick $currentTrick): bool
     {
         return $currentTrick->playedCards->isEmpty();
     }
 
-    private function getLeadSuit(Trick $currentTrick): string
+    public function getLeadSuit(Trick $currentTrick): string
     {
-        return $currentTrick->playedCards->first()->suit;
+        $firstPlayedCard = $currentTrick->playedCards->first();
+        if ($firstPlayedCard && is_object($firstPlayedCard->card)) {
+            return $firstPlayedCard->card->suit;
+        }
+        return '';
     }
 
-    private function hasCardsOfSuit(Hand $hand, string $suit): bool
+    public function hasCardsOfSuit(Hand $hand, string $suit): bool
     {
         return $hand->cards->filter(function ($card) use ($suit) {
             return $card->suit === $suit;
