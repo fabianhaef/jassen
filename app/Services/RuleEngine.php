@@ -39,12 +39,12 @@ class RuleEngine
                 if (!$this->isTrump($card, $round)) {
                     return true;
                 }
-                
+
                 // Check 3: Is there NO higher trump on table?
                 if (!$this->hasHigherTrumpOnTable($currentTrick, $card, $round)) {
                     return true;
                 }
-                
+
                 // Check 4: Player has only trumps?
                 return $this->hasOnlyTrumpCards($hand, $round->trump);
             }
@@ -84,9 +84,17 @@ class RuleEngine
 
     public function hasCardsOfSuit(Hand $hand, string $suit): bool
     {
-        return $hand->cards->filter(function ($card) use ($suit) {
-            return $card->suit === $suit;
-        })->isNotEmpty();
+        $cards = $hand->cards;
+
+        foreach ($cards as $card) {
+            // split the card string into suit and rank
+            $cardSuit = explode('-', $card)[0];
+            if ($cardSuit === $suit) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     public function isTrump(Card $card, Round $round): bool
@@ -96,9 +104,17 @@ class RuleEngine
 
     public function hasOnlyTrumpCards(Hand $hand, string $trumpSuit): bool
     {
-        return $hand->cards->every(function ($card) use ($trumpSuit) {
-            return $card->suit === $trumpSuit;
-        });
+        $cards = $hand->cards;
+
+        foreach ($cards as $card) {
+            // split the card string into suit and rank
+            $suit = explode('-', $card)[0];
+            if ($suit !== $trumpSuit) {
+                return false;
+            }
+        }
+
+        return true;
     }
 
 
@@ -107,7 +123,7 @@ class RuleEngine
         $currentTrump = $round->trump;
         $highestTrumpOnTable = $currentTrick->getHighestTrumpCard($currentTrump);
         if ($highestTrumpOnTable > 0) {
-            return $card->getPoints('trumpf', $currentTrump) > $highestTrumpOnTable;
+            return $highestTrumpOnTable > $card->getPoints('trumpf', $currentTrump);
         } else {
             return false;
         }
