@@ -11,7 +11,13 @@ class RuleEngine
 {
     public function getPlayableCards(Round $round, Hand $hand, Trick $currentTrick): array
     {
-        foreach ($hand->cards as $card) {
+        $playableCards = [];
+
+        foreach ($hand->cards as $cardString) {
+            // Convert string to Card object
+            $cardParts = explode('-', $cardString);
+            $card = new Card($cardParts[0], $cardParts[1]);
+
             if ($this->canPlayCard($round, $hand, $currentTrick, $card)) {
                 $playableCards[] = $card;
             }

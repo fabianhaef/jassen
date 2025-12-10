@@ -19,14 +19,172 @@ class RuleEngineTest extends TestCase
 {
     use RefreshDatabase;
 
+    private RuleEngine $ruleEngine;
+
+    protected function setUp(): void
+    {
+        parent::setUp();
+        $this->ruleEngine = new RuleEngine();
+    }
+
+    /**
+     * Helper: Create a complete game setup with round, player, and game
+     */
+    private function createGameSetup(string $trump = 'schellen'): array
+    {
+        $game = Game::factory()->create([
+            'variation' => 'trumpf',
+            'target_score' => 100,
+            'status' => 'active',
+        ]);
+
+        $round = Round::factory()->create([
+            'game_id' => $game->id,
+            'round_number' => 1,
+            'status' => 'active',
+            'trump' => $trump,
+        ]);
+
+        $user = User::factory()->create();
+        $player = GamePlayer::factory()->create([
+            'user_id' => $user->id,
+            'game_id' => $game->id,
+            'seat_position' => 0,
+        ]);
+
+        return compact('game', 'round', 'player');
+    }
+
+    /**
+     * Helper: Create a trick with played cards
+     */
+    private function createTrickWithCards(Round $round, GamePlayer $player, array $cards): Trick
+    {
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 1,
+            'leading_player_id' => $player->id,
+            'winner_player_id' => $player->id,
+            'points' => 0,
+        ]);
+
+        foreach ($cards as $index => $cardString) {
+            PlayedCard::factory()->create([
+                'trick_id' => $trick->id,
+                'player_id' => $player->id,
+                'card' => $cardString,
+                'play_order' => $index + 1,
+            ]);
+        }
+
+        return $trick;
+    }
+
+    /**
+     * Helper: Create a hand with specific cards
+     */
+    private function createHand(Round $round, GamePlayer $player, array $cards): Hand
+    {
+        return Hand::factory()->create([
+            'round_id' => $round->id,
+            'player_id' => $player->id,
+            'cards' => $cards,
+        ]);
+    }
+
     public function test_get_playable_cards()
     {
-        expect(true)->toBe(true);
+        $round = Round::factory()->create([
+            'game_id' => Game::factory()->create([
+                'variation' => 'trumpf',
+                'target_score' => 100,
+                'status' => 'active'
+            ]),
+            'round_number' => 1,
+            'status' => 'active',
+            'trump' => 'schellen',
+        ]);
+
+        $user = User::factory()->create();
+        $player = GamePlayer::factory()->create([
+            'user_id' => $user->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 0,
+        ]);
+
+        $hand = Hand::factory()->create([
+            'round_id' => $round->id,
+            'player_id' => $player->id,
+            'cards' => ['schellen-6', 'rosen-6'],
+        ]);
+
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 1,
+            'leading_player_id' => $player->id,
+            'winner_player_id' => $player->id,
+            'points' => 0,
+        ]);
+
+        $playedCard = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $player->id,
+            'card' => 'schellen-6',
+            'play_order' => 1,
+        ]); 
+
+        $playableCards = (new RuleEngine())->getPlayableCards($round, $hand, $trick);
+        expect($playableCards)->toHaveCount(1);
     }
 
     public function test_can_play_card()
     {
-        expect(true)->toBe(true);
+        $round = Round::factory()->create([
+            'game_id' => Game::factory()->create([
+                'variation' => 'trumpf',
+                'target_score' => 100,
+                'status' => 'active'
+            ]),
+            'round_number' => 1,
+            'status' => 'active',
+            'trump' => 'schellen',
+        ]);
+
+        $user = User::factory()->create();
+        $player = GamePlayer::factory()->create([
+            'user_id' => $user->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 0,
+        ]);
+
+        $hand = Hand::factory()->create([
+            'round_id' => $round->id,
+            'player_id' => $player->id,
+            'cards' => ['schellen-6', 'rosen-6'],
+        ]);
+
+
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 1,
+            'leading_player_id' => $player->id,
+            'winner_player_id' => $player->id,
+            'points' => 0,
+        ]);
+
+        $playedCard = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $player->id,
+            'card' => 'schellen-7',
+            'play_order' => 1,
+        ]);
+
+
+        $canPlayCard = (new RuleEngine())->canPlayCard($round, $hand, $trick, new Card('schellen', '6'));
+        expect($canPlayCard)->toBe(true);
+
+        $canPlayCard = (new RuleEngine())->canPlayCard($round, $hand, $trick, new Card('rosen', '6'));
+        expect($canPlayCard)->toBe(false);
     }
 
     public function test_is_trick_empty()
