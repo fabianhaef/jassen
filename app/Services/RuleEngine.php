@@ -69,7 +69,26 @@ class RuleEngine
             }
         }
 
-        // // for undeufe / obenabe game mode => trump cards are not allowed
+        if ($gameMode === 'obeabe' or $gameMode === 'undeufe') {
+            if ($this->isTrickEmpty($currentTrick)) {
+                return true;
+            }
+
+            $ledSuit = $this->getLeadSuit($currentTrick);
+
+            // check if the card is the same suit as the led suit
+            if ($card->suit === $ledSuit) {
+                return true;
+            }
+
+            // if the trick is not empty and the card is not of the lead suit and the user has no cards of the lead suit, any card can be played
+            $hasCardsOfSuit = $this->hasCardsOfSuit($hand, $ledSuit);
+            if ($hasCardsOfSuit) {
+                return false; // Player has cards of led suit but didn't play one
+            }
+
+            return true; // Player doesn't have cards of led suit, can play anything
+        }
 
         return false;
     }
