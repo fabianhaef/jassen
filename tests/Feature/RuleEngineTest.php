@@ -91,6 +91,27 @@ class RuleEngineTest extends TestCase
         ]);
     }
 
+    /*
+    * Helper createTrickWithPlayers 
+    */
+    private function createTrickWithPlayers(Round $round, array $players, array $cards): Trick
+    {
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 1,
+            'leading_player_id' => $players[0]->id,
+        ]);
+        foreach ($players as $index => $player) {
+            $playedCard = PlayedCard::factory()->create([
+                'trick_id' => $trick->id,
+                'player_id' => $player->id,
+                'card' => $cards[$index],
+                'play_order' => $index + 1,
+            ]);
+        }
+        return $trick;
+    }
+
     // public function test_get_playable_cards()
     // {
     //     $round = Round::factory()->create([
@@ -143,7 +164,7 @@ class RuleEngineTest extends TestCase
         $trick = $this->createTrickWithCards($round, $player, []);
 
         $playableCards = $this->ruleEngine->getPlayableCards($round, $hand, $trick);
-        expect($playableCards)->toHaveCount(2); 
+        expect($playableCards)->toHaveCount(2);
     }
 
 
@@ -415,7 +436,8 @@ class RuleEngineTest extends TestCase
         expect($hasHigherTrumpOnTable)->toBe(false);  // 6 is not higher than 8
     }
 
-    public function test_empty_trick_trump() {
+    public function test_empty_trick_trump()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('schellen');
         $hand = $this->createHand($round, $player, ['schellen-6', 'rosen-7']);
         $trick = $this->createTrickWithCards($round, $player, []);
@@ -424,7 +446,8 @@ class RuleEngineTest extends TestCase
         expect($playableCards)->toHaveCount(2);
     }
 
-    public function test_follow_suit() {
+    public function test_follow_suit()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('schellen'); // Trump is schellen
         // Player has TWO rosen cards and one eicheln
         $hand = $this->createHand($round, $player, ['rosen-6', 'rosen-7', 'eicheln-8']);
@@ -440,7 +463,8 @@ class RuleEngineTest extends TestCase
         expect($canPlayEicheln)->toBe(false);
     }
 
-    public function test_play_trump_when_cannot_follow_suit() {
+    public function test_play_trump_when_cannot_follow_suit()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('schellen');
         $hand = $this->createHand($round, $player, ['schellen-6']);
 
@@ -448,8 +472,9 @@ class RuleEngineTest extends TestCase
         $playableCards = $this->ruleEngine->getPlayableCards($round, $hand, $trick);
         expect($playableCards)->toHaveCount(1);
     }
-    
-    public function test_cannot_play_lower_trump_when_higher_trump_is_on_table() {
+
+    public function test_cannot_play_lower_trump_when_higher_trump_is_on_table()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('schellen');
 
         // Player has MIXED cards: lower trump (schellen-6) + non-trump (eicheln-7)
@@ -472,7 +497,8 @@ class RuleEngineTest extends TestCase
         expect($canPlayNonTrump)->toBe(true);
     }
 
-    public function test_can_play_trump_when_higher_trump_is_on_table() {
+    public function test_can_play_trump_when_higher_trump_is_on_table()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('schellen');
         $hand = $this->createHand($round, $player, ['schellen-8', 'rosen-9']);
         $trick = $this->createTrickWithCards($round, $player, [new Card('schellen', '7')]);
@@ -488,7 +514,8 @@ class RuleEngineTest extends TestCase
         expect($canPlayAnotherCard)->toBe(true);
     }
 
-    public function test_can_play_trump_when_only_trumps_are_on_hand() {
+    public function test_can_play_trump_when_only_trumps_are_on_hand()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('schellen');
         $hand = $this->createHand($round, $player, ['schellen-8', 'schellen-9']);
         $trick = $this->createTrickWithCards($round, $player, [new Card('schellen', '10')]);
@@ -497,7 +524,8 @@ class RuleEngineTest extends TestCase
     }
 
 
-    public function test_undeufe_mode_follow_suit() {
+    public function test_undeufe_mode_follow_suit()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('undeufe');
         $hand = $this->createHand($round, $player, ['eicheln-6', 'eicheln-7', 'rosen-8']);
         $trick = $this->createTrickWithCards($round, $player, ['eicheln-9']);
@@ -508,7 +536,8 @@ class RuleEngineTest extends TestCase
         expect($canPlayRosen)->toBe(false);
     }
 
-    public function test_undeufe_mode_can_play_anything_when_cannot_follow_suit() {
+    public function test_undeufe_mode_can_play_anything_when_cannot_follow_suit()
+    {
         ['round' => $round, 'player' => $player] = $this->createGameSetup('undeufe');
         $hand = $this->createHand($round, $player, ['eicheln-6', 'schellen-7']);
         $trick = $this->createTrickWithCards($round, $player, ['rosen-8']);
@@ -520,5 +549,53 @@ class RuleEngineTest extends TestCase
         // Can play schellen-7 because player has no rosen cards
         $canPlaySchellen = $this->ruleEngine->canPlayCard($round, $hand, $trick, new Card('schellen', '7'));
         expect($canPlaySchellen)->toBe(true);
+    }
+
+    public function test_undeufe_mode_trick_winner()
+    {
+        ['round' => $round, 'player' => $player] = $this->createGameSetup('undeufe');
+        $player2 = GamePlayer::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 1,
+        ]);
+        $player3 = GamePlayer::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 2,
+        ]);
+        $player4 = GamePlayer::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 3,
+        ]);
+
+        $trick = $this->createTrickWithPlayers($round, [$player, $player2, $player3, $player4], ['eicheln-9', 'rosen-10', 'eicheln-8', 'rosen-9']);
+        $winner = $this->ruleEngine->determineUndeufeTrickWinner($trick->playedCards, 'eicheln');
+        expect($winner->id)->toBe($player3->id);
+    }
+
+    public function test_obeabe_mode_trick_winner()
+    {
+        ['round' => $round, 'player' => $player] = $this->createGameSetup('undeufe');
+        $player2 = GamePlayer::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 1,
+        ]);
+        $player3 = GamePlayer::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 2,
+        ]);
+        $player4 = GamePlayer::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'game_id' => $round->game_id,
+            'seat_position' => 3,
+        ]);
+
+        $trick = $this->createTrickWithPlayers($round, [$player, $player2, $player3, $player4], ['eicheln-9', 'rosen-10', 'eicheln-8', 'rosen-9']);
+        $winner = $this->ruleEngine->determineObeabeTrickWinner($trick->playedCards, 'eicheln');
+        expect($winner->id)->toBe($player->id);
     }
 }

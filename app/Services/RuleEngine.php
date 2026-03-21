@@ -5,7 +5,9 @@ namespace App\Services;
 use App\ValueObjects\Card;
 use App\Models\Round;
 use App\Models\Hand;
+use App\Models\GamePlayer;
 use App\Models\Trick;
+use Illuminate\Support\Collection;
 
 class RuleEngine
 {
@@ -152,5 +154,52 @@ class RuleEngine
         } else {
             return false;
         }
+    }
+
+    public function determineTrickWinner(Trick $currentTrick): GamePlayer
+    {
+        $currentGameMode = $currentTrick->round->game->variation;
+        $leadingSuit = $this->getLeadSuit($currentTrick);
+
+        $playedCards = $currentTrick->playedCards;
+
+        if ($currentGameMode === 'obeabe') {
+            return $this->determineObeabeTrickWinner($playedCards, $leadingSuit);
+        }
+
+        if ($currentGameMode === 'undeufe') {
+            return $this->determineUndeufeTrickWinner($playedCards, $leadingSuit);
+        }
+
+        return $this->determineTrumpfTrickWinner($playedCards, $leadingSuit, $currentTrick->round->trump);
+    }
+
+    public function determineTrumpfTrickWinner(Collection $playedCards, string $leadingSuit, string $trumpSuit): GamePlayer
+    {
+        $highestCard = $playedCards->max(function ($playedCard) use ($trumpSuit) {
+            return $playedCard->card->getPoints('trumpf', $trumpSuit);
+        });
+        return $highestCard->player;
+    }
+
+    public function determineObeabeTrickWinner(Collection $playedCards, string $leadingSuit): GamePlayer
+    {
+        // get the highest played card of the leading suit
+        $highestCardOfLeadingSuit = $playedCards->filter(function ($playedCard) use ($leadingSuit) {
+            return $playedCard->card->suit === $leadingSuit;
+        })->sortBy(function ($playedCard) use ($leadingSuit) {
+            return $playedCard->card->getPoints('obeabe', $leadingSuit);
+        })->first();
+        return $highestCardOfLeadingSuit->player;
+    }
+
+    public function determineUndeufeTrickWinner(Collection $playedCards, string $leadingSuit): GamePlayer
+    {
+        $lowestCardOfLeadingSuit = $playedCards->filter(function ($playedCard) use ($leadingSuit) {
+            return $playedCard->card->suit === $leadingSuit;
+        })->sortBy(function ($playedCard) use ($leadingSuit) {
+            return $playedCard->card->getPoints('undeufe', $leadingSuit);
+        })->last();
+        return $lowestCardOfLeadingSuit->player;
     }
 }

@@ -53,4 +53,9 @@ class Trick extends Model
             return 0;
         });
     }
+
+    public function getPlayedCardsByOrder(): Collection
+    {
+        return $this->playedCards()->orderBy('play_order')->get();
+    }
 }
