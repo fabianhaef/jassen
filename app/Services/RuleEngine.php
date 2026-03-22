@@ -176,9 +176,9 @@ class RuleEngine
 
     public function determineTrumpfTrickWinner(Collection $playedCards, string $leadingSuit, string $trumpSuit): GamePlayer
     {
-        $highestCard = $playedCards->max(function ($playedCard) use ($trumpSuit) {
+        $highestCard = $playedCards->sortByDesc(function ($playedCard) use ($trumpSuit) {
             return $playedCard->card->getPoints('trumpf', $trumpSuit);
-        });
+        })->first();
         return $highestCard->player;
     }
 

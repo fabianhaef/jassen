@@ -10,8 +10,10 @@ use Tests\TestCase;
 use App\Services\GameService;
 use App\Models\Game;
 use App\Models\Round;
-use App\Models\GamePlayer;
 
+use App\Models\GamePlayer;
+use App\Models\Trick;
+use App\Models\PlayedCard;
 
 class GameServiceTest extends TestCase
 {
@@ -139,5 +141,72 @@ class GameServiceTest extends TestCase
         foreach ($round->hands() as $hand) {
             expect($hand->cards)->toHaveCount(9);
         }
+    }
+
+    public function test_calculate_trick_points() {
+        $gameService = new GameService();
+
+        $game = Game::factory()->create(
+            [
+                'variation' => 'trumpf',
+                'target_score' => 100,
+                'status' => 'active',
+            ]
+        );
+
+        $round = Round::factory()->create([
+            'game_id' => $game->id,
+            'round_number' => 1,
+            'status' => 'active',
+            'trump' => 'schellen',
+        ]);
+
+        for ($i = 0; $i < 4; $i++) {
+            $user = User::factory()->create();
+            GamePlayer::factory()->create([
+                'user_id' => $user->id,
+                'game_id' => $game->id,
+                'seat_position' => $i,
+            ]);
+        }       
+
+        $players = $round->game->players()->orderBy('seat_position')->get();
+
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 1,
+            'leading_player_id' => $round->game->players()->first()->id,
+        ]);
+
+        
+        $playedCard1 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->first()->id,
+            'card' => 'schellen-6',
+            'play_order' => 1,
+        ]);
+        $playedCard2 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->get(1)->id,
+            'card' => 'schellen-7',
+            'play_order' => 2,
+        ]);
+        $playedCard3 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->get(2)->id,
+            'card' => 'schellen-8',
+            'play_order' => 3,
+        ]);
+        $playedCard4 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->get(3)->id,
+            'card' => 'schellen-9',
+            'play_order' => 4,
+        ]);
+
+
+        $points = $gameService->calculateTrickPoints($trick, $round);
+
+        expect($points)->toBe(14);
     }
 }

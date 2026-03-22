@@ -9,7 +9,6 @@ use Illuminate\Database\Eloquent\Model;
 use App\Models\Round;
 use App\Models\GamePlayer;
 use App\Models\PlayedCard;
-use App\ValueObjects\Card;
 
 class Trick extends Model
 {

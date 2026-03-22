@@ -6,6 +6,7 @@ use App\Models\Game;
 use App\Models\Round;
 use App\Models\GamePlayer;
 use App\Models\Hand;
+use App\Models\Trick;
 
 class GameService
 {
@@ -75,5 +76,16 @@ class GameService
                 'cards' => $dealtCards[$index],
             ]);
         }
+    }
+    
+    public function calculateTrickPoints(Trick $trick, Round $round): int
+    {
+        $playedCards = $trick->playedCards;
+
+        $points = 0;
+        foreach ($playedCards as $playedCard) {
+            $points += $playedCard->card->getPoints($round->game->variation, $round->trump);
+        }
+        return $points;
     }
 }
