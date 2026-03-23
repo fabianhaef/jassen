@@ -77,7 +77,7 @@ class GameService
             ]);
         }
     }
-    
+
     // calculate the points for a trick
 
     public function calculateTrickPoints(Trick $trick, Round $round): int
@@ -105,8 +105,20 @@ class GameService
         $winnerTeam->save();
         // if its the last trick, add 5 points to the winner team
         if ($trick->trick_number === 9) {
+            $trick->points += 5;
             $winnerTeam->total_score += 5;
             $winnerTeam->save();
         }
-    }   
+    }
+
+    public function startNextTrick(Round $round): Trick {
+        $lastTrick = $round->tricks()->orderBy('trick_number', 'desc')->first();
+        $nextTrick = Trick::create([
+            'round_id' => $round->id,
+            'trick_number' => $lastTrick->trick_number + 1,
+            'leading_player_id' => $lastTrick->winner_player_id,
+        ]);
+
+        return $nextTrick;
+    }
 }
