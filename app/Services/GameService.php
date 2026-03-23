@@ -78,6 +78,8 @@ class GameService
         }
     }
     
+    // calculate the points for a trick
+
     public function calculateTrickPoints(Trick $trick, Round $round): int
     {
         $playedCards = $trick->playedCards;
@@ -88,4 +90,23 @@ class GameService
         }
         return $points;
     }
+
+    // completes trick
+    public function completeTrick(Trick $trick, Round $round): void
+    {
+        $ruleEngine = new RuleEngine();
+        $winner = $ruleEngine->determineTrickWinner($trick);
+        $winnerTeam = $winner->team;
+
+        $trick->points = $this->calculateTrickPoints($trick, $round);
+        $trick->winner_player_id = $winner->id;
+        $trick->save();
+        $winnerTeam->total_score += $trick->points;
+        $winnerTeam->save();
+        // if its the last trick, add 5 points to the winner team
+        if ($trick->trick_number === 9) {
+            $winnerTeam->total_score += 5;
+            $winnerTeam->save();
+        }
+    }   
 }
