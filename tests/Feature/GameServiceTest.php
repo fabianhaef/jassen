@@ -483,10 +483,36 @@ class GameServiceTest extends TestCase
             ]);
         }
 
-        $gameService->completeTrick($trick, $round);
-        $trick->refresh();
         $gameService->completeRound($round);
         $round->refresh();
         expect($round->status)->toBe('completed');
+    }
+
+    public function test_check_game_end() {
+        $gameService = new GameService();
+
+        $game = Game::factory()->create(
+            [
+                'variation' => 'trumpf',
+                'target_score' => 100,
+                'status' => 'active',
+            ]
+        );
+        
+        $team1 = Team::factory()->create([
+            'game_id' => $game->id,
+            'name' => 'Team 1',
+            'total_score' => 0,
+        ]);
+        $team2 = Team::factory()->create([
+            'game_id' => $game->id,
+            'name' => 'Team 2',
+            'total_score' => 101,
+        ]);
+
+        $winnerTeam = $gameService->checkGameEnd($game);
+        expect($winnerTeam->id)->toBe($team2->id);
+        expect($game->status)->toBe('finished');
+        expect($game->winner_team_id)->toBe($team2->id);
     }
 }

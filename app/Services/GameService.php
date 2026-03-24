@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Game;
 use App\Models\Round;
 use App\Models\GamePlayer;
+use App\Models\Team;
 use App\Models\Hand;
 use App\Models\Trick;
 
@@ -132,5 +133,18 @@ class GameService
             return true;
         } 
         return false;
+    }
+
+    public function checkGameEnd(Game $game): ?Team
+    {
+        if($game->teams()->where('total_score', '>=', $game->target_score)->count() > 0) {
+            $winnerTeam = $game->teams()->where('total_score', '>=', $game->target_score)->first();
+            $game->winner_team_id = $winnerTeam->id;
+            $game->status = 'finished';
+            $game->save();
+
+            return $winnerTeam;
+        }
+        return null;
     }
 }
