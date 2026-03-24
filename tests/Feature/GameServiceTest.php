@@ -449,7 +449,7 @@ class GameServiceTest extends TestCase
 
         $round = Round::factory()->create([
             'game_id' => $game->id,
-            'round_number' => 8,
+            'round_number' => 1,
             'status' => 'active',
             'trump' => 'schellen',
         ]);
@@ -482,34 +482,6 @@ class GameServiceTest extends TestCase
                 'winner_player_id' => $players->get($i % 4)->id,
             ]);
         }
-
-        $playedCard1 = PlayedCard::factory()->create([
-            'trick_id' => $trick->id,
-            'player_id' => $players->get(0)->id,
-            'card' => 'schellen-9',
-            'play_order' => 1,
-        ]);
-
-        $playedCard2 = PlayedCard::factory()->create([
-            'trick_id' => $trick->id,
-            'player_id' => $players->get(1)->id,
-            'card' => 'schellen-6',
-            'play_order' => 2,
-        ]);
-
-        $playedCard3 = PlayedCard::factory()->create([
-            'trick_id' => $trick->id,
-            'player_id' => $players->get(2)->id,
-            'card' => 'schellen-7',
-            'play_order' => 3,
-        ]);
-
-        $playedCard4 = PlayedCard::factory()->create([
-            'trick_id' => $trick->id,
-            'player_id' => $players->get(3)->id,
-            'card' => 'schellen-8',
-            'play_order' => 4,
-        ]);
 
         $gameService->completeTrick($trick, $round);
         $trick->refresh();
