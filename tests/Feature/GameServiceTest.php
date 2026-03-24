@@ -434,4 +434,87 @@ class GameServiceTest extends TestCase
         expect($nextTrick->trick_number)->toBe(8);
         expect($nextTrick->leading_player_id)->toBe($trick->winner_player_id);
     }
+
+
+    public function test_complete_round() {
+        $gameService = new GameService();
+
+        $game = Game::factory()->create(
+            [
+                'variation' => 'trumpf',
+                'target_score' => 100,
+                'status' => 'active',
+            ]
+        );
+
+        $round = Round::factory()->create([
+            'game_id' => $game->id,
+            'round_number' => 8,
+            'status' => 'active',
+            'trump' => 'schellen',
+        ]);
+
+        $team1 = Team::factory()->create([
+            'game_id' => $game->id,
+            'name' => 'Team 1',
+        ]);
+        $team2 = Team::factory()->create([
+            'game_id' => $game->id,
+            'name' => 'Team 2',
+        ]);
+
+        for ($i = 0; $i < 4; $i++) {
+            $user = User::factory()->create();
+            GamePlayer::factory()->create([
+                'user_id' => $user->id,
+                'game_id' => $game->id,
+                'seat_position' => $i,
+                'team_id' => $i % 2 + 1 === 1 ? $team1->id : $team2->id,
+            ]);
+        }
+        $players = $round->game->players()->orderBy('seat_position')->get();
+
+        for ($i = 0; $i < 9; $i++) {
+            $trick = Trick::factory()->create([
+                'round_id' => $round->id,
+                'trick_number' => $i + 1,
+                'leading_player_id' => $players->first()->id,
+                'winner_player_id' => $players->get($i % 4)->id,
+            ]);
+        }
+
+        $playedCard1 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->get(0)->id,
+            'card' => 'schellen-9',
+            'play_order' => 1,
+        ]);
+
+        $playedCard2 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->get(1)->id,
+            'card' => 'schellen-6',
+            'play_order' => 2,
+        ]);
+
+        $playedCard3 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->get(2)->id,
+            'card' => 'schellen-7',
+            'play_order' => 3,
+        ]);
+
+        $playedCard4 = PlayedCard::factory()->create([
+            'trick_id' => $trick->id,
+            'player_id' => $players->get(3)->id,
+            'card' => 'schellen-8',
+            'play_order' => 4,
+        ]);
+
+        $gameService->completeTrick($trick, $round);
+        $trick->refresh();
+        $gameService->completeRound($round);
+        $round->refresh();
+        expect($round->status)->toBe('completed');
+    }
 }

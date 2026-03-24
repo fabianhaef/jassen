@@ -48,7 +48,7 @@ class GameService
 
     public function startRound(Game $game): Round
     {
-        $round = Round::factory()->create([
+        $round = Round::create([
             'game_id' => $game->id,
             'round_number' => $game->rounds()->count() + 1,
             'status' => 'active',
@@ -111,7 +111,8 @@ class GameService
         }
     }
 
-    public function startNextTrick(Round $round): Trick {
+    public function startNextTrick(Round $round): Trick
+    {
         $lastTrick = $round->tricks()->orderBy('trick_number', 'desc')->first();
         $nextTrick = Trick::create([
             'round_id' => $round->id,
@@ -120,5 +121,16 @@ class GameService
         ]);
 
         return $nextTrick;
+    }
+
+
+    public function completeRound(Round $round): bool
+    {
+        if ($round->tricks()->whereNotNull('winner_player_id')->count() === 9) {
+            $round->status = 'completed';
+            $round->save();
+            return true;
+        } 
+        return false;
     }
 }
