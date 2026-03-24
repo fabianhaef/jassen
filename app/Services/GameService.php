@@ -8,6 +8,7 @@ use App\Models\GamePlayer;
 use App\Models\Team;
 use App\Models\Hand;
 use App\Models\Trick;
+use App\ValueObjects\Card;
 
 class GameService
 {
@@ -74,7 +75,7 @@ class GameService
             Hand::create([
                 'round_id' => $round->id,
                 'player_id' => $player->id,
-                'cards' => $dealtCards[$index],
+                'cards' => array_map(fn($card) => $card->toString(), $dealtCards[$index]),
             ]);
         }
     }
