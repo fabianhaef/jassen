@@ -570,6 +570,6 @@ class GameServiceTest extends TestCase
 
         $currentPlayer = $gameService->getCurrentPlayer($trick, $game);
         expect($currentPlayer)->toBeInstanceOf(GamePlayer::class);
-        expect($currentPlayer->id)->toBe($round->game->players()->get(1)->id);
+        expect($currentPlayer->id)->toBe($players->get(1)->id);
     }
 }

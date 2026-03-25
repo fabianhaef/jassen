@@ -9,6 +9,8 @@ const props = defineProps({
     round: Object,
     variation: String,
     team_score: Number,
+    current_player: String,
+    is_my_turn: Boolean,
     opponent_score: Number,
     teamMate: Object,
     opponent1: Object,
@@ -22,17 +24,24 @@ const playCard = (card) => {
 };
 </script>
 
-
 <template>
     <h1>Jassen Game</h1>
     <p>Variation: {{ variation }}</p>
     <p>Team Score: {{ team_score }}</p>
     <p>Opponent Score: {{ opponent_score }}</p>
     <p>Game ID: {{ game_id }}</p>
+    
+    <template v-if="is_my_turn">
+        <p>It is your turn to play</p>
+    </template>
+    
+    <template v-else>
+        <p>It is not your turn to play</p>
+    </template>
     <template v-if="hand">
         <ul>
             <li v-for="card in hand.cards" :key="card">
-                <button @click="playCard(card)">Play Card</button>
+                <button @click="playCard(card)" :disabled="!is_my_turn">Play Card</button>
                 {{ card }}
             </li>
         </ul>

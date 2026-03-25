@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use App\Services\GameService;
 use App\Models\Game;
 use App\Models\Trick;
 use App\Models\PlayedCard;
@@ -15,6 +16,7 @@ class GameController extends Controller
 {
     public function show(Game $game)
     {
+        $gameService = new GameService();
         $user = Auth::user();
         $gamePlayer = $game->players()->where('user_id', $user->id)->first();
         $teamMate = $game->players()->where('team_id', $gamePlayer->team_id)->where('user_id', '!=', $user->id)->first();
@@ -35,6 +37,10 @@ class GameController extends Controller
             'variation' => $game->variation,
             'team_score' => $gamePlayer->team->total_score,
             'opponent_score' => $game->teams()->where('id', '!=', $gamePlayer->team->id)->first()->total_score,
+            'current_player' => $currentTrick ? $gameService->getCurrentPlayer($currentTrick, $game)->user->name : null,
+            'is_my_turn' => $currentTrick
+                ? $gameService->getCurrentPlayer($currentTrick, $game)->id === $gamePlayer->id
+                : $round->trump_caller_id === $gamePlayer->id,
             'teamMate' => [
                 'name' => $teamMate->user->name,
                 'seat_position' => $teamMate->seat_position,
@@ -55,6 +61,7 @@ class GameController extends Controller
 
     public function playCard(Game $game, Request $request)
     {
+        $gameService = new GameService();
         $user = Auth::user();
         $gamePlayer = $game->players()->where('user_id', $user->id)->first();
         $round = $game->rounds()->where('status', 'active')->first();
@@ -70,6 +77,11 @@ class GameController extends Controller
                 'trick_number' => 1,
                 'leading_player_id' => $gamePlayer->id,
             ]);
+        }
+
+        $currentPlayer = $gameService->getCurrentPlayer($currentTrick, $game);
+        if ($currentPlayer->id !== $gamePlayer->id) {
+            return redirect()->back()->with('error', 'It is not your turn to play');
         }
 
         $canPlayCard = (new RuleEngine())->canPlayCard($round, $hand, $currentTrick, $playedCard);
