@@ -148,4 +148,13 @@ class GameService
         }
         return null;
     }
+
+    public function getCurrentPlayer(Trick $trick, Game $game): GamePlayer
+    {
+        $cardsPlayed = $trick->playedCards;
+        $currentSeat = ($trick->leadingPlayer->seat_position + $cardsPlayed->count()) % 4;
+        $currentPlayer = $game->players()->where('seat_position', $currentSeat)->first();
+
+        return $currentPlayer;
+    }
 }
