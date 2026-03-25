@@ -10,9 +10,10 @@ const props = defineProps({
     variation: String,
     team_score: Number,
     opponent_score: Number,
+    teamMate: Object,
+    opponent1: Object,
+    opponent2: Object,
 });
-
-console.log(props);
 
 const playCard = (card) => {
     router.post(`/games/${props.game_id}/play`, {
@@ -35,7 +36,30 @@ const playCard = (card) => {
                 {{ card }}
             </li>
         </ul>
+    </template>
 
+    <template v-if="playedCards.length > 0">
+        <ul>
+            <li v-for="card in playedCards" :key="card">
+                <p>{{ card }}</p>
+            </li>
+        </ul>
+    </template>
+
+    <template v-if="opponent1">
+        <p>Opponent 1: {{ opponent1.name }}</p>
+        <p>Cards Remaining: {{ opponent1.cards_remaining }}</p>
+    </template>
+
+    <template v-if="teamMate">
+        <p>Team Mate: {{ teamMate.name }}</p>
+        <p>Cards Remaining: {{ teamMate.cards_remaining }}</p>
+    </template>
+
+
+    <template v-if="opponent2">
+        <p>Opponent 2: {{ opponent2.name }}</p>
+        <p>Cards Remaining: {{ opponent2.cards_remaining }}</p>
     </template>
 
     <template v-else>

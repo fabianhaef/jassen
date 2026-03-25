@@ -17,9 +17,14 @@ class GameController extends Controller
     {
         $user = Auth::user();
         $gamePlayer = $game->players()->where('user_id', $user->id)->first();
+        $teamMate = $game->players()->where('team_id', $gamePlayer->team_id)->where('user_id', '!=', $user->id)->first();
+        $opponent1 = $game->players()->where('team_id', '!=', $gamePlayer->team_id)->first();
+        $opponent2 = $game->players()->where('team_id', '!=', $gamePlayer->team_id)->where('user_id', '!=', $opponent1->user_id)->first();
+
         $round = $game->rounds()->where('status', 'active')->first();
         $hand = $round->hands()->where('player_id', $gamePlayer->id)->first();
         $currentTrick = $round->tricks()->orderBy('trick_number', 'desc')->first();
+
 
         return Inertia::render('Games/Show', [
             'game_id' => $game->id,
@@ -30,10 +35,26 @@ class GameController extends Controller
             'variation' => $game->variation,
             'team_score' => $gamePlayer->team->total_score,
             'opponent_score' => $game->teams()->where('id', '!=', $gamePlayer->team->id)->first()->total_score,
+            'teamMate' => [
+                'name' => $teamMate->user->name,
+                'seat_position' => $teamMate->seat_position,
+                'cards_remaining' => count($round->hands()->where('player_id', $teamMate->id)->first()->cards),
+            ],
+            'opponent1' => [
+                'name' => $opponent1->user->name,
+                'seat_position' => $opponent1->seat_position,
+                'cards_remaining' => count($round->hands()->where('player_id', $opponent1->id)->first()->cards),
+            ],
+            'opponent2' => [
+                'name' => $opponent2->user->name,
+                'seat_position' => $opponent2->seat_position,
+                'cards_remaining' => count($round->hands()->where('player_id', $opponent2->id)->first()->cards),
+            ],
         ]);
     }
 
-    public function playCard(Game $game, Request $request) {
+    public function playCard(Game $game, Request $request)
+    {
         $user = Auth::user();
         $gamePlayer = $game->players()->where('user_id', $user->id)->first();
         $round = $game->rounds()->where('status', 'active')->first();
@@ -41,7 +62,7 @@ class GameController extends Controller
         $playedCard = Card::fromString($playedCardId);
         $hand = $round->hands()->where('player_id', $gamePlayer->id)->first();
 
-        if($round->tricks()->count() > 0) {
+        if ($round->tricks()->count() > 0) {
             $currentTrick = $round->tricks()->orderBy('trick_number', 'desc')->first();
         } else {
             $currentTrick = Trick::create([
