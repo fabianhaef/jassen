@@ -11,6 +11,7 @@ use App\Models\PlayedCard;
 use Inertia\Inertia;
 use App\Services\RuleEngine;
 use App\ValueObjects\Card;
+use App\Services\BotService;
 
 class GameController extends Controller
 {
@@ -24,9 +25,29 @@ class GameController extends Controller
         $opponent2 = $game->players()->where('team_id', '!=', $gamePlayer->team_id)->where('user_id', '!=', $opponent1->user_id)->first();
 
         $round = $game->rounds()->where('status', 'active')->first();
+        if (!$round) {
+            if ($game->status === 'finished') {
+                // show game results
+                return Inertia::render('Games/Results', [
+                    'game_id' => $game->id,
+                    'game' => $game,
+                ]);
+            } else {
+                // start new round
+                $round = $gameService->startRound($game);
+                $gameService->dealCardsForRound($round);
+
+                $previousRound = $game->rounds()->where('status', 'completed')->latest()->first();
+                $nextSeat = ($previousRound->trumpCaller->seat_position + 1) % 4;
+                $round->trump_caller_id = $game->players()->where('seat_position', $nextSeat)->first()->id;
+                $round->trump = 'schellen';
+                $round->save();
+                return redirect()->route('games.show', $game)->with('success', 'Round started successfully');
+            }
+        }
+
         $hand = $round->hands()->where('player_id', $gamePlayer->id)->first();
         $currentTrick = $round->tricks()->orderBy('trick_number', 'desc')->first();
-
 
         return Inertia::render('Games/Show', [
             'game_id' => $game->id,
@@ -61,10 +82,16 @@ class GameController extends Controller
 
     public function playCard(Game $game, Request $request)
     {
+
         $gameService = new GameService();
+        $botService = new BotService();
+
         $user = Auth::user();
         $gamePlayer = $game->players()->where('user_id', $user->id)->first();
         $round = $game->rounds()->where('status', 'active')->first();
+
+
+
         $playedCardId = $request->input('played_card_id');
         $playedCard = Card::fromString($playedCardId);
         $hand = $round->hands()->where('player_id', $gamePlayer->id)->first();
@@ -78,6 +105,7 @@ class GameController extends Controller
                 'leading_player_id' => $gamePlayer->id,
             ]);
         }
+
 
         $currentPlayer = $gameService->getCurrentPlayer($currentTrick, $game);
         if ($currentPlayer->id !== $gamePlayer->id) {
@@ -102,6 +130,42 @@ class GameController extends Controller
             return $card !== $newPlayedCard->card->toString();
         });
         $hand->save();
+
+        if ($currentTrick->playedCards()->count() === 4) {
+            $gameService->completeTrick($currentTrick, $round);
+
+            if ($currentTrick->trick_number === 9) {
+                $gameService->completeRound($round);
+                $gameService->checkGameEnd($game);
+            } else {
+                $gameService->startNextTrick($round);
+            }
+        }
+
+
+        // Now let bots play until it's the human's turn again
+        while (true) {
+            $currentTrick = $round->tricks()->orderBy('trick_number', 'desc')->first();
+
+            // check if trick is complete
+            if ($currentTrick->playedCards()->count() === 4) {
+                $gameService->completeTrick($currentTrick, $round);
+                if ($currentTrick->trick_number === 9) {
+                    $gameService->completeRound($round);
+                    $gameService->checkGameEnd($game);
+                    break;
+                }
+                $currentTrick = $gameService->startNextTrick($round);
+            }
+
+            $nextPlayer = $gameService->getCurrentPlayer($currentTrick, $game);
+            if ($nextPlayer->user_id === $user->id) {
+                break; // it's the human's turn, stop
+            }
+
+            $botService->playCard($game, $round, $currentTrick, $nextPlayer);
+        }
+
 
         return redirect()->route('games.show', $game)->with('success', 'Card played successfully');
     }
