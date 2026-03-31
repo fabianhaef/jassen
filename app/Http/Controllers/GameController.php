@@ -56,6 +56,7 @@ class GameController extends Controller
             'playedCards' => $currentTrick?->playedCards ?? [],
             'round' => $round,
             'variation' => $game->variation,
+            'trump' => $round->trump,
             'team_score' => $gamePlayer->team->total_score,
             'opponent_score' => $game->teams()->where('id', '!=', $gamePlayer->team->id)->first()->total_score,
             'current_player' => $currentTrick ? $gameService->getCurrentPlayer($currentTrick, $game)->user->name : null,

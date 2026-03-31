@@ -54,7 +54,7 @@ class GameService
             'game_id' => $game->id,
             'round_number' => $game->rounds()->count() + 1,
             'status' => 'active',
-        ])->first();
+        ]);
 
         return $round;
     }
