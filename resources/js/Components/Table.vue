@@ -6,6 +6,9 @@ import Card from '@/Components/Card.vue';
 const props = defineProps({
     ownCards: Array,
     playedCards: Array,
+    teamMate: Object,
+    opponent1: Object,
+    opponent2: Object,
 });
 
 const playCard = (card) => {
@@ -14,19 +17,21 @@ const playCard = (card) => {
 
 const emit = defineEmits(['playCard']);
 
-console.log(props);
+console.log("opponent1.cards_remaining", props.opponent1.cards_remaining);
 </script>
 
 <template>
     <div class="table">
         <!-- Teammate (top) -->
         <div class="teammate">
-            <HiddenCard v-for="i in ownCards.length" :key="'tm-' + i" />
+            <span class="player-name">Teammate{{ teamMate.name }}</span>
+            <HiddenCard v-for="i in teamMate.cards_remaining" :key="'tm-' + i" />
         </div>
 
         <!-- Opponent 1 (left) -->
         <div class="opponent-left">
-            <HiddenCard v-for="i in ownCards.length" :key="'op1-' + i" />
+            <span class="player-name">{{ opponent1.name }}</span>
+            <HiddenCard v-for="i in opponent1.cards_remaining" :key="'op1-' + i" />
         </div>
 
         <!-- Played cards (center) -->
@@ -36,7 +41,8 @@ console.log(props);
 
         <!-- Opponent 2 (right) -->
         <div class="opponent-right">
-            <HiddenCard v-for="i in ownCards.length" :key="'op2-' + i" />
+            <span class="player-name">{{ opponent2.name }}</span>
+            <HiddenCard v-for="i in opponent2.cards_remaining" :key="'op2-' + i" />
         </div>
 
         <!-- Own hand (bottom) -->
@@ -138,5 +144,12 @@ console.log(props);
 .own-hand :deep(.card) {
     width: 70px;
     height: 105px;
+}
+
+.player-name {
+    font-size: 12px;
+    font-weight: bold;
+    text-align: center;
+    white-space: nowrap;
 }
 </style>

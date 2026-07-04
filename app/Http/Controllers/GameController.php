@@ -40,7 +40,6 @@ class GameController extends Controller
                 $previousRound = $game->rounds()->where('status', 'completed')->latest()->first();
                 $nextSeat = ($previousRound->trumpCaller->seat_position + 1) % 4;
                 $round->trump_caller_id = $game->players()->where('seat_position', $nextSeat)->first()->id;
-                $round->trump = 'schellen';
                 $round->save();
                 return redirect()->route('games.show', $game)->with('success', 'Round started successfully');
             }
@@ -66,17 +65,17 @@ class GameController extends Controller
             'teamMate' => [
                 'name' => $teamMate->user->name,
                 'seat_position' => $teamMate->seat_position,
-                'cards_remaining' => count($round->hands()->where('player_id', $teamMate->id)->first()->cards),
+                'cards_remaining' => count($round->hands()->where('player_id', $teamMate->id)->first()?->cards ?? []),
             ],
             'opponent1' => [
                 'name' => $opponent1->user->name,
                 'seat_position' => $opponent1->seat_position,
-                'cards_remaining' => count($round->hands()->where('player_id', $opponent1->id)->first()->cards),
+                'cards_remaining' => count($round->hands()->where('player_id', $opponent1->id)->first()?->cards ?? []),
             ],
             'opponent2' => [
                 'name' => $opponent2->user->name,
                 'seat_position' => $opponent2->seat_position,
-                'cards_remaining' => count($round->hands()->where('player_id', $opponent2->id)->first()->cards),
+                'cards_remaining' => count($round->hands()->where('player_id', $opponent2->id)->first()?->cards ?? []),
             ],
         ]);
     }
@@ -169,5 +168,21 @@ class GameController extends Controller
 
 
         return redirect()->route('games.show', $game)->with('success', 'Card played successfully');
+    }
+
+    public function selectTrump(Game $game, Request $request)
+    {
+        $gameService = new GameService();
+        $user = Auth::user();
+        $gamePlayer = $game->players()->where('user_id', $user->id)->first();
+        $round = $game->rounds()->where('status', 'active')->first();
+
+        if (!$round || $round->trump_caller_id !== $gamePlayer->id) {
+            return redirect()->back()->with('error', 'You are not the trump caller');
+        }
+
+        $trump = $request->input('trump');
+        $gameService->selectTrump($round, $trump, $gamePlayer->id);
+        return redirect()->route('games.show', $game)->with('success', 'Trump selected successfully');
     }
 }

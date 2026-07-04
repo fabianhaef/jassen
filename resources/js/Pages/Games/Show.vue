@@ -2,6 +2,7 @@
 import { router } from '@inertiajs/vue3';
 import { computed } from 'vue';
 import Table from '@/Components/Table.vue';
+import GameInfo from '@/Components/GameInfo.vue';
 
 const props = defineProps({
     game_id: Number,
@@ -31,12 +32,6 @@ const playedCards = computed(() => {
 </script>
 
 <template>
-    <div class="flex flex-col items-center justify-center">
-        <h1>Jassen Game</h1>
-        <p>Variation: {{ variation }}</p>
-        <p>Team Score: {{ team_score }}</p>
-        <p>Opponent Score: {{ opponent_score }}</p>
-        <p>Game ID: {{ game_id }}</p>
-    </div>
-    <Table :playedCards="playedCards" :ownCards="hand.cards" @playCard="playCard"></Table>
+    <GameInfo :game="{ name: 'Jassen Game', variation: variation, team_score: team_score, opponent_score: opponent_score }"></GameInfo>
+    <Table :playedCards="playedCards" :ownCards="hand.cards" :teamMate="teamMate" :opponent1="opponent1" :opponent2="opponent2" @playCard="playCard"></Table>
 </template>
