@@ -12,6 +12,7 @@ Route::get('/', function () {
 
 Route::get('/games/{game}', [GameController::class, 'show'])->middleware('auth')->name('games.show');
 Route::post('/games/{game}/play', [GameController::class, 'playCard'])->middleware('auth')->name('games.playCard');
+Route::post('/games/{game}/select-trump', [GameController::class, 'selectTrump'])->middleware('auth')->name('games.selectTrump');
 
 Route::view('dashboard', 'dashboard')
     ->middleware(['auth', 'verified'])

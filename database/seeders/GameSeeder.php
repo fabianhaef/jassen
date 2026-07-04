@@ -45,7 +45,7 @@ class GameSeeder extends Seeder
 
         $gameService = new GameService();
         $round = $gameService->startRound($game);
-        $round->trump = 'schellen';
+        // $round->trump = 'schellen';
         $round->trump_caller_id = $game->players()->first()->id;
         $round->save();
 

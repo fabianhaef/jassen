@@ -2,6 +2,7 @@
 import HiddenCard from '@/Components/HiddenCard.vue';
 import Hand from '@/Components/Hand.vue';
 import Card from '@/Components/Card.vue';
+import TrumpSelector from '@/Components/TrumpSelector.vue';
 
 const props = defineProps({
     ownCards: Array,
@@ -9,19 +10,28 @@ const props = defineProps({
     teamMate: Object,
     opponent1: Object,
     opponent2: Object,
+    selectTrump: Function,
+    is_my_turn: Boolean,
+    trump: String,
 });
 
 const playCard = (card) => {
     emit('playCard', card);
 };
 
-const emit = defineEmits(['playCard']);
+const selectTrump = (trump) => {
+    emit('selectTrump', trump);
+};
+
+const emit = defineEmits(['playCard', 'selectTrump']);
 
 console.log("opponent1.cards_remaining", props.opponent1.cards_remaining);
 </script>
 
 <template>
     <div class="table">
+        <TrumpSelector v-if="is_my_turn && !trump" :trump="trump" @selectTrump="selectTrump" />
+
         <!-- Teammate (top) -->
         <div class="teammate">
             <span class="player-name">Teammate{{ teamMate.name }}</span>

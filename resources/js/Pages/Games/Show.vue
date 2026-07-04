@@ -29,9 +29,16 @@ const playCard = (card) => {
 const playedCards = computed(() => {
     return props.playedCards.map(card => card.card.suit + '-' + card.card.rank);
 });
+
+const selectTrump = (trump) => {
+    console.log('selecting trump', trump);
+    router.post(`/games/${props.game_id}/select-trump`, {
+        trump: trump
+    });
+};
 </script>
 
 <template>
     <GameInfo :game="{ name: 'Jassen Game', variation: variation, team_score: team_score, opponent_score: opponent_score }"></GameInfo>
-    <Table :playedCards="playedCards" :ownCards="hand.cards" :teamMate="teamMate" :opponent1="opponent1" :opponent2="opponent2" @playCard="playCard"></Table>
+    <Table :playedCards="playedCards" :ownCards="hand.cards" :teamMate="teamMate" :opponent1="opponent1" :opponent2="opponent2" :trump="trump || ''" :is_my_turn="is_my_turn" @playCard="playCard" @selectTrump="selectTrump"></Table>
 </template>
