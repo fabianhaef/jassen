@@ -3,12 +3,11 @@
 namespace App\Services;
 
 use App\Models\Game;
-use App\Models\Round;
 use App\Models\GamePlayer;
-use App\Models\Team;
 use App\Models\Hand;
+use App\Models\Round;
+use App\Models\Team;
 use App\Models\Trick;
-use App\ValueObjects\Card;
 
 class GameService
 {
@@ -21,7 +20,7 @@ class GameService
 
     public function schieben(Round $round): void
     {
-        $round->is_geschoben = true;;
+        $round->is_geschoben = true;
         $round->save();
     }
 
@@ -31,7 +30,7 @@ class GameService
         $status,
         array $usersIds
     ): Game {
-        $game =  Game::create([
+        $game = Game::create([
             'variation' => $variation,
             'target_score' => $targetScore,
             'status' => $status,
@@ -61,7 +60,7 @@ class GameService
 
     public function dealCardsForRound(Round $round): void
     {
-        $cardService = new CardService();
+        $cardService = new CardService;
 
         $deck = $cardService->createDeck();
 
@@ -75,7 +74,7 @@ class GameService
             Hand::create([
                 'round_id' => $round->id,
                 'player_id' => $player->id,
-                'cards' => array_map(fn($card) => $card->toString(), $dealtCards[$index]),
+                'cards' => array_map(fn ($card) => $card->toString(), $dealtCards[$index]),
             ]);
         }
     }
@@ -90,13 +89,14 @@ class GameService
         foreach ($playedCards as $playedCard) {
             $points += $playedCard->card->getPoints($round->game->variation, $round->trump);
         }
+
         return $points;
     }
 
     // completes trick
     public function completeTrick(Trick $trick, Round $round): void
     {
-        $ruleEngine = new RuleEngine();
+        $ruleEngine = new RuleEngine;
         $winner = $ruleEngine->determineTrickWinner($trick);
         $winnerTeam = $winner->team;
 
@@ -105,7 +105,6 @@ class GameService
         $trick->save();
         $winnerTeam->total_score += $trick->points;
         $winnerTeam->save();
-        // if its the last trick, add 5 points to the winner team
         if ($trick->trick_number === 9) {
             $trick->points += 5;
             $trick->save();
@@ -126,20 +125,21 @@ class GameService
         return $nextTrick;
     }
 
-
     public function completeRound(Round $round): bool
     {
         if ($round->tricks()->whereNotNull('winner_player_id')->count() === 9) {
             $round->status = 'completed';
             $round->save();
+
             return true;
-        } 
+        }
+
         return false;
     }
 
     public function checkGameEnd(Game $game): ?Team
     {
-        if($game->teams()->where('total_score', '>=', $game->target_score)->count() > 0) {
+        if ($game->teams()->where('total_score', '>=', $game->target_score)->count() > 0) {
             $winnerTeam = $game->teams()->where('total_score', '>=', $game->target_score)->first();
             $game->winner_team_id = $winnerTeam->id;
             $game->status = 'finished';
@@ -147,6 +147,7 @@ class GameService
 
             return $winnerTeam;
         }
+
         return null;
     }
 

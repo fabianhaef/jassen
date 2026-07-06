@@ -2,19 +2,16 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-
-use Illuminate\Foundation\Testing\RefreshDatabase;
-
-use Tests\TestCase;
-use App\Services\GameService;
 use App\Models\Game;
-use App\Models\Round;
-
 use App\Models\GamePlayer;
+use App\Models\PlayedCard;
+use App\Models\Round;
 use App\Models\Team;
 use App\Models\Trick;
-use App\Models\PlayedCard;
+use App\Models\User;
+use App\Services\GameService;
+use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\TestCase;
 
 class GameServiceTest extends TestCase
 {
@@ -22,7 +19,7 @@ class GameServiceTest extends TestCase
 
     public function test_select_trump()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -48,10 +45,9 @@ class GameServiceTest extends TestCase
         expect($round->trump)->toBe('schellen');
     }
 
-
     public function test_schieben()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -72,10 +68,9 @@ class GameServiceTest extends TestCase
         expect($round->is_geschoben)->toBe(true);
     }
 
-
     public function test_create_game()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $users = User::factory()->count(4)->create();
 
@@ -92,10 +87,9 @@ class GameServiceTest extends TestCase
         expect($game->players()->pluck('seat_position')->toArray())->toBe([0, 1, 2, 3]);
     }
 
-
     public function test_start_round()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -114,7 +108,7 @@ class GameServiceTest extends TestCase
 
     public function test_deal_cards_for_round()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -146,7 +140,7 @@ class GameServiceTest extends TestCase
 
     public function test_calculate_trick_points()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -200,7 +194,6 @@ class GameServiceTest extends TestCase
             'trick_number' => 1,
             'leading_player_id' => $round->game->players()->first()->id,
         ]);
-
 
         $playedCard1 = PlayedCard::factory()->create([
             'trick_id' => $trick->id,
@@ -258,7 +251,6 @@ class GameServiceTest extends TestCase
             'play_order' => 4,
         ]);
 
-
         $points = $gameService->calculateTrickPoints($trick, $round);
         $points2 = $gameService->calculateTrickPoints($trick2, $round2);
 
@@ -266,10 +258,9 @@ class GameServiceTest extends TestCase
         expect($points2)->toBe(23);
     }
 
-
     public function test_complete_trick()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -327,14 +318,12 @@ class GameServiceTest extends TestCase
             'play_order' => 2,
         ]);
 
-
         $playedCard3 = PlayedCard::factory()->create([
             'trick_id' => $trick->id,
             'player_id' => $players->get(2)->id,
             'card' => 'schellen-7',
             'play_order' => 3,
         ]);
-
 
         $playedCard4 = PlayedCard::factory()->create([
             'trick_id' => $trick->id,
@@ -355,7 +344,7 @@ class GameServiceTest extends TestCase
 
     public function test_start_next_trick()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -436,10 +425,9 @@ class GameServiceTest extends TestCase
         expect($nextTrick->leading_player_id)->toBe($trick->winner_player_id);
     }
 
-
     public function test_complete_round()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -492,7 +480,7 @@ class GameServiceTest extends TestCase
 
     public function test_check_game_end()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -521,7 +509,7 @@ class GameServiceTest extends TestCase
 
     public function test_get_current_player()
     {
-        $gameService = new GameService();
+        $gameService = new GameService;
 
         $game = Game::factory()->create(
             [
@@ -559,7 +547,7 @@ class GameServiceTest extends TestCase
             $playedCard = PlayedCard::factory()->create([
                 'trick_id' => $trick->id,
                 'player_id' => $players->get($i)->id,
-                'card' => 'schellen-' . ($i + 1),
+                'card' => 'schellen-'.($i + 1),
                 'play_order' => $i + 1,
             ]);
         }
@@ -571,5 +559,57 @@ class GameServiceTest extends TestCase
         $currentPlayer = $gameService->getCurrentPlayer($trick, $game);
         expect($currentPlayer)->toBeInstanceOf(GamePlayer::class);
         expect($currentPlayer->id)->toBe($players->get(1)->id);
+    }
+
+    public function test_complete_trick_persists_last_trick_bonus_on_trick_row(): void
+    {
+        $gameService = new GameService;
+
+        $game = Game::factory()->create([
+            'variation' => 'trumpf',
+            'target_score' => 100,
+            'status' => 'active',
+        ]);
+
+        $team = Team::factory()->create([
+            'game_id' => $game->id,
+            'name' => 'Team 1',
+            'total_score' => 0,
+        ]);
+
+        $players = collect(range(0, 3))->map(fn (int $seat) => GamePlayer::factory()->create([
+            'user_id' => User::factory()->create()->id,
+            'game_id' => $game->id,
+            'seat_position' => $seat,
+            'team_id' => $team->id,
+        ]));
+
+        $round = Round::factory()->create([
+            'game_id' => $game->id,
+            'round_number' => 1,
+            'status' => 'active',
+            'trump' => 'schellen',
+        ]);
+
+        $trick = Trick::factory()->create([
+            'round_id' => $round->id,
+            'trick_number' => 9,
+            'leading_player_id' => $players[0]->id,
+        ]);
+
+        foreach (['schellen-under', 'schellen-6', 'schellen-8', 'schellen-7'] as $index => $card) {
+            PlayedCard::factory()->create([
+                'trick_id' => $trick->id,
+                'player_id' => $players[$index]->id,
+                'card' => $card,
+                'play_order' => $index + 1,
+            ]);
+        }
+
+        $gameService->completeTrick($trick->fresh(['playedCards.player']), $round);
+
+        $trick->refresh();
+
+        expect($trick->points)->toBe(25);
     }
 }
