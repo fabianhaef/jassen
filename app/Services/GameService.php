@@ -108,6 +108,7 @@ class GameService
         // if its the last trick, add 5 points to the winner team
         if ($trick->trick_number === 9) {
             $trick->points += 5;
+            $trick->save();
             $winnerTeam->total_score += 5;
             $winnerTeam->save();
         }
