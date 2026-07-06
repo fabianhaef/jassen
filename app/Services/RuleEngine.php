@@ -176,10 +176,25 @@ class RuleEngine
 
     public function determineTrumpfTrickWinner(Collection $playedCards, string $leadingSuit, string $trumpSuit): GamePlayer
     {
-        $highestCard = $playedCards->sortByDesc(function ($playedCard) use ($trumpSuit) {
-            return $playedCard->card->getPoints('trumpf', $trumpSuit);
-        })->first();
-        return $highestCard->player;
+        $trumpStrength = [
+            '6' => 1, '7' => 2, '8' => 3, '10' => 4,
+            'ober' => 5, 'koenig' => 6, 'ass' => 7, '9' => 8, 'under' => 9,
+        ];
+    
+        $trumps = $playedCards->filter(fn ($pc) => $pc->card->suit === $trumpSuit);
+    
+        if ($trumps->isNotEmpty()) {
+            return $trumps
+                ->sortByDesc(fn ($pc) => $trumpStrength[$pc->card->rank] ?? 0)
+                ->first()
+                ->player;
+        }
+    
+        return $playedCards
+            ->filter(fn ($pc) => $pc->card->suit === $leadingSuit)
+            ->sortByDesc(fn ($pc) => array_search($pc->card->rank, Card::RANKS, true))
+            ->first()
+            ->player;
     }
 
     public function determineObeabeTrickWinner(Collection $playedCards, string $leadingSuit): GamePlayer
