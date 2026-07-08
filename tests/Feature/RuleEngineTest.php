@@ -716,6 +716,24 @@ class RuleEngineTest extends TestCase
         expect($winner->seat_position)->toBe(3);
     }
 
+    public function test_determine_trick_winner_game_one_trick_six_eichel_ober_beats_eichel_eight(): void
+    {
+        ['round' => $round, 'players' => $players] = $this->createTrumpfRoundWithPlayers('rosen');
+
+        // Game 1 trick 6 — eichel led, schellen-8 is an off-suit discard, ober wins (not eichel-8)
+        $trick = $this->createTrickWithPlayers(
+            $round,
+            [$players[1], $players[2], $players[3], $players[0]],
+            ['eichel-6', 'eichel-8', 'schellen-8', 'eichel-ober'],
+        );
+
+        $trick->load(['playedCards' => fn ($query) => $query->orderBy('play_order'), 'round.game']);
+
+        $winner = $this->ruleEngine->determineTrickWinner($trick);
+
+        expect($winner->seat_position)->toBe(0);
+    }
+
     public function test_trumpf_trick_winner_matches_jass_rules_for_game_one_round(): void
     {
         ['round' => $round, 'players' => $players] = $this->createTrumpfRoundWithPlayers();
