@@ -102,7 +102,7 @@ class RuleEngine
 
     public function getLeadSuit(Trick $currentTrick): string
     {
-        $firstPlayedCard = $currentTrick->playedCards->first();
+        $firstPlayedCard = $currentTrick->playedCards->orderBy('play_order')->first();
         if ($firstPlayedCard && is_object($firstPlayedCard->card)) {
             return $firstPlayedCard->card->suit;
         }

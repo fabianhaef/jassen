@@ -17,8 +17,8 @@ const emit = defineEmits(['selectTrump']);
         <button @click="selectTrump('undeufe')">Undeufe</button>
         <button @click="selectTrump('schellen')">Schellen</button>
         <button @click="selectTrump('rosen')">Rosen</button>
-        <button @click="selectTrump('schilten')">Schilten</button>
-        <button @click="selectTrump('eicheln')">Eicheln</button>
+        <button @click="selectTrump('schilte')">Schilten</button>
+        <button @click="selectTrump('eichel')">Eicheln</button>
     </div>
 </template>
 
